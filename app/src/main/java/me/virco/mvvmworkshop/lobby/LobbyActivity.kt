@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import dagger.android.AndroidInjection
 import me.virco.mvvmworkshop.R
 import javax.inject.Inject
@@ -23,7 +24,8 @@ class LobbyActivity : AppCompatActivity() {
         val TAG: String = LobbyActivity::class.java.simpleName
     }
 
-    @Inject lateinit var viewModelFactory: LobbyViewModelFactory
+    @Inject
+    lateinit var viewModelFactory: LobbyViewModelFactory
     private lateinit var viewModel: LobbyViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,18 +33,18 @@ class LobbyActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_lobby)
 
-        viewModel= ViewModelProviders
+        viewModel = ViewModelProviders
                 .of(this, viewModelFactory)
                 .get(LobbyViewModel::class.java)
 
-        viewModel.response.observe(this, Observer(::processResponse))
+        viewModel.response.observe(this, processResponse)
 
         commonGreetingButton.setOnClickListener { viewModel.loadCommonGreeting() }
         lobbyGreetingButton.setOnClickListener { viewModel.loadLobbyGreeting() }
 
     }
 
-    private fun processResponse(response: Response<String>?) {
+    private val processResponse = Observer<Response<String>> { response ->
         when (response) {
             is Loading -> renderLoadingState()
             is Success -> renderDataState(response.data)
@@ -62,6 +64,9 @@ class LobbyActivity : AppCompatActivity() {
     }
 
     private fun renderErrorState(t: Throwable) {
-        Log.e(TAG, , t.localizedMessage, t)
+        Log.e(TAG, t.localizedMessage, t)
+        loadingIndicator.visibility = View.GONE
+        greetingTextView.visibility = View.GONE
+        Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show()
     }
 }
